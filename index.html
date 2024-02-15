@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webcam OCR with Tesseract.js</title>
+    <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
+    <style>
+        #overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            color: white;
+            border: 2px solid red; /* Color of the rectangle */
+        }
+        #container {
+            position: relative;
+        }
+        video, canvas {
+            display: block; /* Ensure canvas and video are block level for overlay */
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <video id="video" autoplay></video>
+        <canvas id="overlay"></canvas>
+    </div>
+    <button id="capture">Capture and Recognize Text</button>
+    <div id="text">Recognized text will be displayed here</div>
+
+    <script>
+        const video = document.getElementById('video');
+        const button = document.getElementById('capture');
+        const textElement = document.getElementById('text');
+        const overlay = document.getElementById('overlay');
+        const overlayCtx = overlay.getContext('2d');
+
+        async function setupWebcam() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
+                video.onloadedmetadata = () => {
+                    overlay.width = video.videoWidth;
+                    overlay.height = video.videoHeight;
+                    drawOverlay();
+                };
+            } catch (err) {
+                console.error('Error accessing the webcam', err);
+            }
+        }
+
+        function drawOverlay() {
+            // Clear previous overlay
+            overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
+
+            // Define the zoomed area (for example, a central rectangle)
+            const zoomArea = {
+                x: overlay.width * 0.25,
+                y: overlay.height * 0.25,
+                width: overlay.width * 0.5,
+                height: overlay.height * 0.5,
+            };
+
+            // Draw a rectangle to visualize the zoomed area
+            overlayCtx.strokeStyle = 'red';
+            overlayCtx.lineWidth = 4;
+            overlayCtx.strokeRect(zoomArea.x, zoomArea.y, zoomArea.width, zoomArea.height);
+        }
+
+        async function captureAndRecognizeText() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const zoomArea = {
+                x: video.videoWidth * 0.25,
+                y: video.videoHeight * 0.25,
+                width: video.videoWidth * 0.5,
+                height: video.videoHeight * 0.5,
+            };
+
+            // Adjust canvas size to the zoomed area for capturing
+            canvas.width = zoomArea.width;
+            canvas.height = zoomArea.height;
+
+            // Draw only the zoomed area of the video onto the canvas
+            ctx.drawImage(video, zoomArea.x, zoomArea.y, zoomArea.width, zoomArea.height, 0, 0, zoomArea.width, zoomArea.height);
+            const imageData = canvas.toDataURL('image/png');
+
+
+			const worker = await Tesseract.createWorker('eng');
+		    const ret = await worker.recognize(imageData);
+		    console.log(ret.data.text);
+            textElement.innerText = `Recognized Text: ${ret.data.text}`;
+            await worker.terminate();
+        }
+        
+
+        button.addEventListener('click', () => captureAndRecognizeText());
+
+        setupWebcam();
+    </script>
+</body>
+</html>
