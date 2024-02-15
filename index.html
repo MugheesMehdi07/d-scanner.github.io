@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Webcam OCR with Tesseract.js</title>
+    <title>Webcam OCR with Tesseract.js for Driving License</title>
     <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
     <style>
         #overlay {
@@ -86,14 +86,25 @@
             ctx.drawImage(video, zoomArea.x, zoomArea.y, zoomArea.width, zoomArea.height, 0, 0, zoomArea.width, zoomArea.height);
             const imageData = canvas.toDataURL('image/png');
 
-
-			const worker = await Tesseract.createWorker('eng');
-		    const ret = await worker.recognize(imageData);
-		    console.log(ret.data.text);
-            textElement.innerText = `Recognized Text: ${ret.data.text}`;
+            const worker = await Tesseract.createWorker('eng');
+            const ret = await worker.recognize(imageData);
+            console.log(ret.data.text);
+            processDrivingLicenseText(ret.data.text);
             await worker.terminate();
         }
-        
+
+        function processDrivingLicenseText(text) {
+            let name = text.match(/Name\s*:\s*([^\n\r]+)/);
+            let address = text.match(/Address\s*:\s*([^\n\r]+)/);
+            let expirationDate = text.match(/Expiration\s*Date\s*:\s*([^\n\r]+)/);
+
+            // Adjust the regex based on the actual format of your driving license cards
+            name = name ? name[1].trim() : "Name not detected";
+            address = address ? address[1].trim() : "Address not detected";
+            expirationDate = expirationDate ? expirationDate[1].trim() : "Expiration date not detected";
+
+            textElement.innerHTML = `Name: ${name}<br>Address: ${address}<br>Expiration Date: ${expirationDate}`;
+        }
 
         button.addEventListener('click', () => captureAndRecognizeText());
 
