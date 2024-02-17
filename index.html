@@ -102,8 +102,16 @@
             name = name ? name[1].trim() : "Name not detected";
             address = address ? address[1].trim() : "Address not detected";
             expirationDate = expirationDate ? expirationDate[1].trim() : "Expiration date not detected";
+			
+			
 
-            textElement.innerHTML = `Name: ${name}<br>Address: ${address}<br>Expiration Date: ${expirationDate}`;
+			
+			textElement.innerHTML = `Name: ${name}<br>Address: ${address}<br>Expiration Date: ${expirationDate}`;
+			
+				
+			textElement.innerHTML += `<br><br><strong>Recognized Text:</strong><br>${text.replace(/\n/g, "<br>")}`;
+
+			
         }
 
         button.addEventListener('click', () => captureAndRecognizeText());
